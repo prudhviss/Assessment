@@ -1,0 +1,41 @@
+---
+- name: launch alb
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/alb-vars.yaml
+  - name: create security group
+    ec2_group:
+      name: alb-sg
+      description: "A security group for alb"
+      vpc_id: "vpc-005ef97d"
+      region: "{{ region }}"
+      rules:
+        - proto: tcp
+          from_port: 80
+          to_port: 80
+          cidr_ip: "{{ item }}"
+      with_items: ip_addresses
+      rules_egress:
+        - proto: all
+          from_port: 0
+          to_port: 0
+          cidr_ip: 0.0.0.0/0
+    register: res_sg
+  - name: create alb
+    ec2_elb_lb:
+      name: "alb"
+      state: present
+      instance_ids:
+        - i-087e6e227c665cd80
+      security_group_ids: "{{ res_sg.group_id }}"
+      subnets:
+        - subnet-6190ca2c
+        - subnet-f02ff1c1
+      listeners:
+        - protocol: https # options are http, https, ssl, tcp
+          load_balancer_port: 443
+          instance_port: 8000
+          ssl_certificate_id: "arn:aws:iam::123456789012:server-certificate/company/servercerts/ProdServerCert"
+

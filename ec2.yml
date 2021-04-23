@@ -1,0 +1,62 @@
+---
+- name: launch ec2
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/ec2-rds-vars.yaml
+  tasks:
+  - name: create key pair
+    ec2_key:
+      name: "{{ username }}"
+      key_material: "{{ lookup('file', 'id_rsa.pub') }}"
+      region: "{{ region }}"
+  - name: create security group
+    ec2_group:
+      name: "{{ username }}"
+      description: "A security group for {{ username }} instance"
+      vpc_id: "vpc-005ef97d"
+      region: "{{ region }}"
+      rules:
+        - proto: tcp
+          from_port: 80
+          to_port: 80
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
+      rules_egress:
+        - proto: all
+          from_port: 0
+          to_port: 0
+          cidr_ip: 0.0.0.0/0
+      tags:
+        Name: "{{ username }}"
+    register: res_sg
+  - name: create ec2 instance
+    ec2:
+      key_name: "{{ username }}"
+      instance_type: t2.micro
+      image: ami-013f17f36f8b1fefb
+      region: "{{ region }}"
+      wait: yes
+      group_id: "{{ res_sg.group_id }}"
+      count: 1
+      vpc_subnet_id: "{{ subnet_id }}"
+      assign_public_ip: yes
+      instance_tags:
+       Name: syn-app0
+  - rds:
+      command: create
+      instance_name: new-database
+      db_engine: postgres
+      size: 10
+      region: "{{ region }}"
+      instance_type: db.t2.micro
+      username: "{{ db_user }}"
+      password: "{{ password }}"
+      db_name: "{{ db_name }}"
+      port: "{{ port }}"
+      tags:
+        Environment: testing

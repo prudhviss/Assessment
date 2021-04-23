@@ -1,0 +1,4 @@
+region: us-east-1
+ip_addresses:
+  - 1.2.3.4/32
+  - 2.3.4.5/32

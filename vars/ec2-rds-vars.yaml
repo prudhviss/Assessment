@@ -1,0 +1,7 @@
+username: test-user
+region: us-east-1
+subnet_id: subnet-f02ff1c1
+db_user: pg_user
+password: 1nsecure
+db_name: test
+port: 5432

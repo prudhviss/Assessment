@@ -1,0 +1,11 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+
+  tasks:
+  - name: create key pair "{{username}}"
+    amazon.aws.ec2_key:
+      name: "{{username}}"
+      key_material: "{{ lookup('file', '/home/coditas/.ssh/id_rsa.pub') }}"
+      region: "{{region}}"
